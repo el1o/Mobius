@@ -760,6 +760,32 @@ exports.insert_tm = function(obj, callback) {
     });
 };
 
+exports.insert_fcnt = function({ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, sri, spi, cr, cntDef, customAttributes}, callback) {
+    console.time('insert_fcnt ' + ri);
+    _this.insert_lookup(ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, sri, spi, function (err, results) {
+        if(!err) {
+            var sql = util.format('insert into fcnt (ri, cr, cntdef, ca) ' +
+                'value (\'%s\', \'%s\', \'%s\', \'%s\')',
+                ri, cr, cntDef, JSON.stringify(customAttributes));
+            db.getResult(sql, '', function (err, results) {
+                if(!err) {
+                    console.timeEnd('insert_cnt ' + ri);
+                    callback(err, results);
+                }
+                else {
+                    sql = util.format("delete from lookup where ri = \'%s\'", ri);
+                    db.getResult(sql, '', function () {
+                        callback(err, results);
+                    });
+                }
+            });
+        }
+        else {
+            callback(err, results);
+        }
+    });
+};
+
 exports.select_csr_like = function(cb, callback) {
     var sql = util.format("select * from csr where ri like \'/%s/%%\'", cb);
     db.getResult(sql, '', function (err, results_csr) {

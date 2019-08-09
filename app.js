@@ -1718,10 +1718,10 @@ function lookup_create(request, response) {
                     }
                     else if ((ty == 2) && (parent_comm.ty == 5)) { // ae
                     }
-                    else if ((ty == 3) && (parent_comm.ty == 5 || parent_comm.ty == 2 || parent_comm.ty == 3)) { // container
+                    else if ((ty == 3) && (parent_comm.ty == 5 || parent_comm.ty == 2 || parent_comm.ty == 3 || parent_comm.ty == 28)) { // container
                     }
                     else if ((ty == 23) && (parent_comm.ty == 5 || parent_comm.ty == 16 || parent_comm.ty == 2 ||
-                            parent_comm.ty == 3 || parent_comm.ty == 24 || parent_comm.ty == 29 || parent_comm.ty == 9 || parent_comm.ty == 1 || parent_comm.ty == 27)) { // sub
+                            parent_comm.ty == 3 || parent_comm.ty == 24 || parent_comm.ty == 29 || parent_comm.ty == 9 || parent_comm.ty == 1 || parent_comm.ty == 27 || parent_comm.ty == 28)) { // sub
                     }
                     else if ((ty == 4) && (parent_comm.ty == 3)) { // contentInstance
                     }
@@ -1743,6 +1743,8 @@ function lookup_create(request, response) {
                     }
                     else if ((ty == 39) && (parent_comm.ty == 5 || parent_comm.ty == 16 || parent_comm.ty == 2 ||
                             parent_comm.ty == 3 || parent_comm.ty == 24 || parent_comm.ty == 29 || parent_comm.ty == 9 || parent_comm.ty == 1 || parent_comm.ty == 27)) { // transaction
+                    }
+                    else if ((ty = 28) && (parent_comm.ty == 2 || parent_comm.ty == 3 || parent_comm.ty == 28)){ //flexContainer
                     }
                     else {
                         body_Obj = {};

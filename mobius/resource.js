@@ -42,6 +42,7 @@ var nod = require('./nod');
 var mgo = require('./mgo');
 var tm = require('./tm');
 var tr = require('./tr');
+var fcnt = require('./fcnt');
 
 var util = require('util');
 var merge = require('merge');
@@ -52,7 +53,7 @@ var db_sql = require('./sql_action');
 
 var _this = this;
 
-global.ty_list = ['1', '2', '3', '4', '5', '9', '10', '13', '14', '16', '17', '23', '24', '27', '29', '30', '38', '39'];
+global.ty_list = ['1', '2', '3', '4', '5', '9', '10', '13', '14', '16', '17', '23', '24', '27', '28', '29', '30', '38', '39'];
 
 global.create_np_attr_list = {};
 create_np_attr_list.acp = ['ty', 'ri', 'pi', 'ct', 'lt', 'st'];
@@ -77,6 +78,7 @@ create_np_attr_list.bat = ['ty', 'ri', 'pi', 'ct', 'lt', 'st'];
 create_np_attr_list.dvi = ['ty', 'ri', 'pi', 'ct', 'lt', 'st'];
 create_np_attr_list.dvc = ['ty', 'ri', 'pi', 'ct', 'lt', 'st'];
 create_np_attr_list.rbo = ['ty', 'ri', 'pi', 'ct', 'lt', 'st'];
+create_np_attr_list.fcnt = ['contentSize'];
 
 global.create_m_attr_list = {};
 create_m_attr_list.acp = ['pv', 'pvs'];
@@ -101,6 +103,7 @@ create_m_attr_list.bat = ['mgd', 'btl', 'bts'];
 create_m_attr_list.dvi = ['mgd', 'dlb', 'man', 'mod', 'dty', 'fwv', 'swv', 'hwv'];
 create_m_attr_list.dvc = ['mgd', 'can', 'att', 'cas', 'cus'];
 create_m_attr_list.rbo = ['mgd'];
+create_m_attr_list.fcnt = ['cntDef'];
 
 global.create_opt_attr_list = {};
 create_opt_attr_list.acp = ['rn', 'et', 'lbl', 'aa', 'at'];
@@ -125,7 +128,7 @@ create_opt_attr_list.bat = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', '
 create_opt_attr_list.dvi = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', 'dc', 'cmlk'];
 create_opt_attr_list.dvc = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', 'dc', 'cmlk', 'ena', 'dis'];
 create_opt_attr_list.rbo = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', 'dc', 'cmlk', 'rbo', 'far'];
-
+create_opt_attr_list.fcnt = ['ontologyRef', 'nodeLink']; //should be renamed to xuy poymesh name
 
 global.update_np_attr_list = {};
 update_np_attr_list.acp = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt'];
@@ -889,6 +892,32 @@ function create_action(request, response, ty, resource_Obj, callback) {
                 }
             });
     }
+    else if (ty == '28') {
+        db_sql.insert_fcnt(resource_Obj[rootnm], function (err, results) {
+                if (!err) {
+                    cbs_cache[resource_Obj[rootnm].ri] = {};
+                    cbs_cache[resource_Obj[rootnm].ri].cni = 0;
+                    cbs_cache[resource_Obj[rootnm].ri].cbs = 0;
+                    cbs_cache[resource_Obj[rootnm].ri].st = 0;
+
+                    callback('1', resource_Obj);
+                }
+                else {
+                    if (results.code == 'ER_DUP_ENTRY') {
+                        body_Obj = {};
+                        body_Obj['dbg'] = results.message;
+                        responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
+                    }
+                    else {
+                        body_Obj = {};
+                        body_Obj['dbg'] = results.message;
+                        responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
+                    }
+                    callback('0', resource_Obj);
+                    return '0';
+                }
+            });
+    }
     else if (ty == '29') {
         db_sql.insert_ts(resource_Obj[rootnm].ty, resource_Obj[rootnm].ri, resource_Obj[rootnm].rn, resource_Obj[rootnm].pi, resource_Obj[rootnm].ct,
             resource_Obj[rootnm].lt, resource_Obj[rootnm].et, JSON.stringify(resource_Obj[rootnm].acpi), JSON.stringify(resource_Obj[rootnm].lbl), JSON.stringify(resource_Obj[rootnm].at),
@@ -1216,7 +1245,7 @@ function build_resource(request, response, ty, body_Obj, callback) {
                             resource_Obj[rootnm][attr] = body_Obj[rootnm][attr];
                             mandatory_check_count += 1;
                         }
-                        else {
+                        else if (ty != 28){
                             body_Obj = {};
                             body_Obj['dbg'] = 'BAD REQUEST: ' + attr + ' attribute is not defined';
                             responder.response_result(request, response, 400, body_Obj, 4000, request.url, body_Obj['dbg']);
@@ -1327,6 +1356,11 @@ function build_resource(request, response, ty, body_Obj, callback) {
                     callback(rsc, resource_Obj);
                 });
                 break;
+            case '28':
+                fcnt.build_fcnt(request, response, resource_Obj, body_Obj, function (rsc, resource_Obj) {
+                    callback(rsc, resource_Obj);
+                });
+                break;
             case '29':
                 ts.build_ts(request, response, resource_Obj, body_Obj, function (rsc, resource_Obj) {
                     callback(rsc, resource_Obj);
@@ -1395,7 +1429,7 @@ function build_resource(request, response, ty, body_Obj, callback) {
                     }
                 }
 
-                switch (ty) {
+                switch (ty.toString()) {
                     case '1':
                         acp.build_acp(request, response, resource_Obj, body_Obj, function (rsc, resource_Obj) {
                             callback(rsc, resource_Obj);
@@ -1458,6 +1492,11 @@ function build_resource(request, response, ty, body_Obj, callback) {
                         break;
                     case '27':
                         mms.build_mms(request, response, resource_Obj, body_Obj, function (rsc, resource_Obj) {
+                            callback(rsc, resource_Obj);
+                        });
+                        break;
+                    case '28':
+                        fcnt.build_fcnt(request, response, resource_Obj, body_Obj, function (rsc, resource_Obj) {
                             callback(rsc, resource_Obj);
                         });
                         break;

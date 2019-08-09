@@ -682,7 +682,8 @@ var rceLname = {
     "mms": "multimediaSession",
     "rce":"resource",
     "uri":"URI",
-    "fwnnam":"firmwareName"
+    "fwnnam":"firmwareName",
+    "fcnt": "flexContainer"
 };
 
 
@@ -779,6 +780,7 @@ var typeRsrc = {
     "23": "sub",
     "24": "smd",
     "27": "mms",
+    "28": "fcnt",
     "29": "ts",
     "30": "tsi",
     "38": "tm",
