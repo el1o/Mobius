@@ -1926,6 +1926,11 @@ function lookup_retrieve(request, response) {
                     else if (result_Obj.ty == 16) {
                         result_Obj.cr = result_Obj.csi;
                     }
+                    else if (result_Obj.ty === 28) {
+                        let ca = JSON.parse(result_Obj.ca);
+                        delete result_Obj.ca;
+                        result_Obj = {...result_Obj, ...ca}
+                    }
 
                     if (request.query.fu == 1) {
                         security.check(request, response, result_Obj.ty, result_Obj.acpi, '32', result_Obj.cr, function (rsc, request, response) {

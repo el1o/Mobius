@@ -760,16 +760,16 @@ exports.insert_tm = function(obj, callback) {
     });
 };
 
-exports.insert_fcnt = function({ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, sri, spi, cr, cntDef, customAttributes}, callback) {
+exports.insert_fcnt = function({ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, sri, spi, cr, cnd, ca}, callback) {
     console.time('insert_fcnt ' + ri);
     _this.insert_lookup(ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, sri, spi, function (err, results) {
         if(!err) {
-            var sql = util.format('insert into fcnt (ri, cr, cntdef, ca) ' +
+            var sql = util.format('insert into fcnt (ri, cr, cnd, ca) ' +
                 'value (\'%s\', \'%s\', \'%s\', \'%s\')',
-                ri, cr, cntDef, JSON.stringify(customAttributes));
+                ri, cr, cnd, JSON.stringify(ca));
             db.getResult(sql, '', function (err, results) {
                 if(!err) {
-                    console.timeEnd('insert_cnt ' + ri);
+                    console.timeEnd('insert_fcnt ' + ri);
                     callback(err, results);
                 }
                 else {
@@ -1870,6 +1870,28 @@ exports.update_mms = function (lt, acpi, et, st, lbl, at, aa, ri, stid, asd, osd
         }
     });
 };
+
+exports.update_fcnt = function ({lt, acpi, et, st, lbl, at, aa, ri, daci, or, nl, ca}, callback) {
+    console.time('update_fcnt ' + ri);
+    _this.update_lookup(lt, JSON.stringify(acpi), et, st, JSON.stringify(lbl), JSON.stringify(at), JSON.stringify(aa), ri, function (err, results) {
+        if (!err) {
+            var sql2 = `update fcnt set fcnt.or = '${or}', ca = '${JSON.stringify(ca)}' where ri = '${ri}'`;
+            db.getResult(sql2, '', function (err, results) {
+                if (!err) {
+                    console.timeEnd('update_fcnt ' + ri);
+                    callback(err, results);
+                }
+                else {
+                    callback(err, results);
+                }
+            });
+        }
+        else {
+            callback(err, results);
+        }
+    });
+};
+
 
 exports.update_tm = function (obj, callback) {
     console.time('update_tm ' + obj.ri);

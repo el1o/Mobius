@@ -103,7 +103,7 @@ create_m_attr_list.bat = ['mgd', 'btl', 'bts'];
 create_m_attr_list.dvi = ['mgd', 'dlb', 'man', 'mod', 'dty', 'fwv', 'swv', 'hwv'];
 create_m_attr_list.dvc = ['mgd', 'can', 'att', 'cas', 'cus'];
 create_m_attr_list.rbo = ['mgd'];
-create_m_attr_list.fcnt = ['cntDef'];
+create_m_attr_list.fcnt = ['cnd'];
 
 global.create_opt_attr_list = {};
 create_opt_attr_list.acp = ['rn', 'et', 'lbl', 'aa', 'at'];
@@ -128,7 +128,7 @@ create_opt_attr_list.bat = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', '
 create_opt_attr_list.dvi = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', 'dc', 'cmlk'];
 create_opt_attr_list.dvc = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', 'dc', 'cmlk', 'ena', 'dis'];
 create_opt_attr_list.rbo = ['rn', 'acpi', 'et', 'lbl', 'daci', 'objs', 'obps', 'dc', 'cmlk', 'rbo', 'far'];
-create_opt_attr_list.fcnt = ['ontologyRef', 'nodeLink']; //should be renamed to xuy poymesh name
+create_opt_attr_list.fcnt = ['or', 'nodeLink', 'nl'];
 
 global.update_np_attr_list = {};
 update_np_attr_list.acp = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt'];
@@ -150,6 +150,7 @@ update_np_attr_list.bat = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt', 'st', 'mgd', 'obj
 update_np_attr_list.dvi = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt', 'st', 'mgd', 'objs', 'obps'];
 update_np_attr_list.dvc = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt', 'st', 'mgd', 'objs', 'obps'];
 update_np_attr_list.rbo = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt', 'st', 'mgd', 'objs', 'obps'];
+update_np_attr_list.fcnt = ['rn', 'ty', 'ri', 'pi', 'ct', 'lt', 'st', 'cr', 'cnd', 'cs'];
 
 global.update_m_attr_list = {};
 update_m_attr_list.acp = [];
@@ -171,6 +172,7 @@ update_m_attr_list.bat = [];
 update_m_attr_list.dvi = [];
 update_m_attr_list.dvc = [];
 update_m_attr_list.rbo = [];
+update_m_attr_list.fcnt = [];
 
 global.update_opt_attr_list = {};
 update_opt_attr_list.acp = ['et', 'lbl', 'aa', 'at', 'pv', 'pvs'];
@@ -192,7 +194,7 @@ update_opt_attr_list.bat = ['acpi', 'et', 'lbl', 'daci', 'dc', 'cmlk', 'btl', 'b
 update_opt_attr_list.dvi = ['acpi', 'et', 'lbl', 'daci', 'dc', 'cmlk', 'dlb', 'man', 'mod', 'dty', 'fwv', 'swv', 'hwv'];
 update_opt_attr_list.dvc = ['acpi', 'et', 'lbl', 'daci', 'dc', 'cmlk', 'can', 'att', 'cas', 'cus', 'ena', 'dis'];
 update_opt_attr_list.rbo = ['acpi', 'et', 'lbl', 'daci', 'dc', 'cmlk', 'rbo', 'far'];
-
+update_opt_attr_list.fcnt = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'or', 'nl'];
 
 exports.t_isr = function (id, param1, param2, param3) {
     console.log(id, param1, param2, param3);
@@ -1581,6 +1583,11 @@ exports.create = function (request, response, ty, body_Obj, callback) {
                             });
                         }
 
+                        if (ty === 28){
+                            let {ca, ...obj} = create_Obj[rootnm];
+                            create_Obj[rootnm] = {...obj, ...ca}
+                        }
+
                         _this.remove_no_value(request, create_Obj);
 
                         if (request.query.real != 4) {
@@ -2044,7 +2051,13 @@ global.update_body = function (rootnm, body_Obj, resource_Obj) {
                 resource_Obj[rootnm][attr] = body_Obj[rootnm][attr].toString();
             }
             else {
-                resource_Obj[rootnm][attr] = body_Obj[rootnm][attr];
+                if (resource_Obj[rootnm].ty === 28 && attr === 'ca') {
+                    resource_Obj[rootnm]['ca'] = JSON.parse(resource_Obj[rootnm]['ca']);
+                    for (const [key, value] of Object.entries(body_Obj[rootnm]['ca']))
+                        resource_Obj[rootnm]['ca'][key] = body_Obj[rootnm]['ca'][key]
+                } else {
+                    resource_Obj[rootnm][attr] = body_Obj[rootnm][attr];
+                }
             }
 
             if (attr === 'aa' || attr === 'poa' || attr === 'lbl' || attr === 'acpi' || attr === 'srt' || attr === 'nu' || attr === 'mid' || attr === 'macp') {
@@ -2404,6 +2417,23 @@ function update_action(request, response, ty, resource_Obj, callback) {
             JSON.stringify(resource_Obj[rootnm].at), JSON.stringify(resource_Obj[rootnm].aa), resource_Obj[rootnm].ri,
             resource_Obj[rootnm].stid, resource_Obj[rootnm].asd, resource_Obj[rootnm].osd, resource_Obj[rootnm].sst, function (err, results) {
                 if (!err) {
+                    callback('1', resource_Obj);
+                }
+                else {
+                    body_Obj = {};
+                    body_Obj['dbg'] = results.message;
+                    responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
+                    callback('0', resource_Obj);
+                    return '0';
+                }
+            });
+    }
+    else if (ty === 28) {
+        db_sql.update_fcnt(resource_Obj[rootnm], function (err, results) {
+                if (!err) {
+                    const {ca, ...obj} = resource_Obj['fcnt'];
+                    delete resource_Obj['ca'];
+                    resource_Obj['fcnt'] = {...ca, ...obj};
                     callback('1', resource_Obj);
                 }
                 else {
@@ -2792,7 +2822,7 @@ function check_acp_update_acpi(request, response, bodyObj, acpi, cr, callback) {
 
 function update_resource(request, response, ty, body_Obj, resource_Obj, callback) {
     var rootnm = request.headers.rootnm;
-
+    var ca = {}
     if (ty_list.includes(ty.toString())) {
         var mandatory_check_count = 0;
 
@@ -2833,7 +2863,7 @@ function update_resource(request, response, ty, body_Obj, resource_Obj, callback
                             }
                             mandatory_check_count += 1;
                         }
-                        else {
+                        else if (ty !== 28){
                             body_Obj = {};
                             body_Obj['dbg'] = 'BAD REQUEST: ' + attr + ' attribute is not defined';
                             responder.response_result(request, response, 400, body_Obj, 4000, request.url, body_Obj['dbg']);
@@ -2860,6 +2890,16 @@ function update_resource(request, response, ty, body_Obj, resource_Obj, callback
                 return '0';
             }
             else {
+                if (ty === 28){
+                    let ca = {};
+                    for (const [key, value] of Object.entries(body_Obj['fcnt'])){
+                        if (![...update_opt_attr_list.fcnt, ...update_np_attr_list.fcnt].includes(key)){
+                            ca[key] = value;
+                            delete body_Obj['fcnt'][key];
+                        }
+                    }
+                    body_Obj['fcnt']['ca'] = ca
+                }
                 update_body(rootnm, body_Obj, resource_Obj); // (attr == 'aa' || attr == 'poa' || attr == 'lbl' || attr == 'acpi' || attr == 'srt' || attr == 'nu' || attr == 'mid' || attr == 'macp')
 
                 resource_Obj[rootnm].st = (parseInt(resource_Obj[rootnm].st, 10) + 1).toString();
