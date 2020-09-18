@@ -1,5 +1,5 @@
 # Mobius
-oneM2M IoT Server Platform
+oneM2M IoT Server Platform. flexContainer resource support is added.
 
 ## Version
 2.4.x
