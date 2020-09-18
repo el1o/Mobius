@@ -1,5 +1,5 @@
 # Mobius
-oneM2M IoT Server Platform
+oneM2M IoT Server Platform. Forked from https://github.com/IoTKETI/Mobius. Added support for flexContainer resource. 
 
 ## Version
 2.4.x
